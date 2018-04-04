@@ -41,10 +41,3 @@ if __name__ == "__main__":
         t.join()
     except Exception, exc:
         print exc
-    #sniff(prn = lambda x:  x.summary(),count=100)
-
-        # 标准格式：sniff(filter="",iface="any",prn=function,count=N)
-        # filter 对scapy嗅探的数据包 指定一个 BPF（wireshark类型）的过滤器，留空嗅探所有数据包
-        # iface  设置所需要嗅探的网卡，留空嗅探所有网卡
-        # prn    指定嗅探到符合过滤器条件的数据包时所调用的回调函数,这个回调函数以接受到的数据包对象作为唯一的参数。
-        # count  指定嗅探的数据包的个数，留空则默认为嗅探无限个
