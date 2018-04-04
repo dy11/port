@@ -1,31 +1,48 @@
 #coding:utf-8
 from scapy.layers.inet import *
-
+import threading
 import time
+import signal
 
+hostlist = {}
+
+def t1():
+    hostlist.clear()
+    print "test"
+def t2():
+    while 1:
+        t1()
+        time.sleep(5)
+
+def quit(signum,frame):
+    print "quit!"
+    print hostlist
+    os._exit(signum)
 def timestamp2time(timestamp):
     timeArray = time.localtime(timestamp)
     mytime = time.strftime("%Y-%m-%d %H:%M:%S", timeArray)
     return mytime
 
-def pack_callback(packet):
-    if "host: " in str(packet.payload).lower():
-        #print "TimeStamp:%s" % packet.time                 #当前时间
-        #print "Sniff-Time:%s"% timestamp2time(packet.time) #当前时间
-        #print "Src-IP:%s" % packet[IP].src                 #源IP地址
-        #print "Src-Port:%s" % packet[TCP].sport            #源端口
-        #print "Dst-IP:%s"%packet[IP].dst                   #目标IP地址
-        #print "Dst-IP:%s" % packet[TCP].dport              #目标端口
-        #print "%s"%packet[TCP].payload                     #报信息
-        #print "%s"%packet.summary()                        #显示数据摘要
-        #print "%s"%packet.show()                           #显示数据包的状况
-        print "%s --- %s:%s --> %s:%s " %(timestamp2time(packet.time),packet[IP].src,packet.sport,packet[IP].dst,packet.dport)
-        print packet[TCP].payload
-        #print "%s"%packet.src
-        print "*******************************************************************"
-
+def packet_callback(packet):
+    if packet[IP].src not in hostlist:
+        hostlist[packet[IP].src] = 1
+    else:
+        hostlist[packet[IP].src]+=1
+        if hostlist[packet[IP].src] >= 30:
+            print "Scanner detected. The Scanner originated from %s"% packet[IP].src
 if __name__ == "__main__":
-    sniff(prn=pack_callback,count = 10)
+    #print 'test'
+    try:
+        signal.signal(signal.SIGINT, quit)
+        signal.signal(signal.SIGTERM, quit)
+        t = threading.Thread(target=t2)
+        t.start()
+        sniff(filter="tcp",prn = packet_callback)
+        t.join()
+    except Exception, exc:
+        print exc
+    #sniff(prn = lambda x:  x.summary(),count=100)
+
         # 标准格式：sniff(filter="",iface="any",prn=function,count=N)
         # filter 对scapy嗅探的数据包 指定一个 BPF（wireshark类型）的过滤器，留空嗅探所有数据包
         # iface  设置所需要嗅探的网卡，留空嗅探所有网卡
